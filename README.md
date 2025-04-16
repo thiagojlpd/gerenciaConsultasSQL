@@ -36,8 +36,8 @@ Este projeto consiste em um agendador de consultas SQL utilizando Spring Boot. O
 
    ```properties
    spring.datasource.url=jdbc:mysql://localhost:3306/seu_banco_destino
-   spring.datasource.username=root
-   spring.datasource.password=root
+   spring.datasource.username=sua_senha
+   spring.datasource.password=sua_senha
    spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
    ```
 
