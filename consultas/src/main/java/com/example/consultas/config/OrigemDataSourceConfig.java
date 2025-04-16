@@ -23,4 +23,6 @@ public class OrigemDataSourceConfig {
     public JdbcTemplate origemJdbcTemplate(@Qualifier("origemDataSource") DataSource ds) {
         return new JdbcTemplate(ds);
     }
+
+
 }
