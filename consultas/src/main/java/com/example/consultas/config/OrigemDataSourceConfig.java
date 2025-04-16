@@ -24,5 +24,17 @@ public class OrigemDataSourceConfig {
         return new JdbcTemplate(ds);
     }
 
+    @Primary
+    @Bean(name = "destinoDataSource")
+    @ConfigurationProperties(prefix = "spring.datasource.destino")
+    public DataSource destinoDataSource() {
+        return DataSourceBuilder.create().build();
+    }
+
+    @Primary
+    @Bean(name = "destinoJdbcTemplate")
+    public JdbcTemplate destinoJdbcTemplate(@Qualifier("destinoDataSource") DataSource ds) {
+        return new JdbcTemplate(ds);
+    }
 
 }
