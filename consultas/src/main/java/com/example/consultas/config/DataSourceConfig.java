@@ -11,7 +11,7 @@ import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
-public class OrigemDataSourceConfig {
+public class DataSourceConfig {
 
     @Bean(name = "origemDataSource")
     @ConfigurationProperties(prefix = "spring.datasource.origem")
