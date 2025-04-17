@@ -29,13 +29,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/web/resultados")
+@RequestMapping
 public class ResultadoConsultaWebController {
 
     @Autowired
     private ResultadoConsultaRepository repository;
 
-    @GetMapping
+    @GetMapping("/inicio")
+    public String index() {
+        return "index"; // Vai buscar templates/index.html
+    }
+
+    @RequestMapping("/web/resultados")
     public String listarComFiltro(
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
