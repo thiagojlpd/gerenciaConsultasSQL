@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Configuration
 public class DataSourceConfig {
 
+    //spring.datasource.origem
     @Bean(name = "origemDataSource")
     @ConfigurationProperties(prefix = "spring.datasource.origem")
     public DataSource origemDataSource() {
@@ -24,6 +25,7 @@ public class DataSourceConfig {
         return new JdbcTemplate(ds);
     }
 
+    //spring.datasource.destino
     @Primary
     @Bean(name = "destinoDataSource")
     @ConfigurationProperties(prefix = "spring.datasource.destino")
@@ -36,5 +38,4 @@ public class DataSourceConfig {
     public JdbcTemplate destinoJdbcTemplate(@Qualifier("destinoDataSource") DataSource ds) {
         return new JdbcTemplate(ds);
     }
-
 }

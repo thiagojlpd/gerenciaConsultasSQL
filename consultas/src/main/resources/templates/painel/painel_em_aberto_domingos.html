@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Processos por Dia</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f7f7f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      width: 70%;
+      height: 90%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #9c88ff, #6a4caf);
+      color: white;
+      padding: 8px;
+      text-align: center;
+      font-size: 20px;
+    }
+
+    #linechart_material {
+      width: 105%;
+      height: 50%;
+    }
+
+    .table-container {
+      width: 100%;
+      max-height: 60%;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fafafa;
+    }
+
+    th,
+    td {
+      padding: 5px 8px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background: linear-gradient(135deg, #f6d1f1, #e9c9d7);
+      color: #6a4caf;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    th.sorted-asc::after {
+      content: " \2191";
+      /* Seta para cima */
+    }
+
+    th.sorted-desc::after {
+      content: " \2193";
+      /* Seta para baixo */
+    }
+
+    .footer {
+      background: linear-gradient(135deg, #866ff8, #6a4caf);
+      color: white;
+      padding: 10px;
+      font-size: 14px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-wrap: wrap;
+      /* Permite a quebra de linha */
+      gap: 16px;
+      /* Espaçamento entre as métricas */
+      justify-content: center;
+      /* Alinha os itens à esquerda */
+      bottom: 0;
+    }
+
+    .metric {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .value {
+      font-size: 16px;
+      font-weight: normal;
+      color: #ffd700;
+      /* Dourado suave */
+    }
+
+    .footer .metric:last-child {
+      margin-bottom: 0;
+    }
+
+    .error-message {
+      color: red;
+      font-size: 16px;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .highlight {
+      background-color: #f5cffe;
+      /* Cor de destaque (amarelo suave) */
+    }
+
+    .highlight-day {
+      background-color: #f5cffe;
+      /* Cor de destaque (amarelo suave) */
+    }
+
+    .highlight-greater {
+      background: linear-gradient(135deg, #90EE90, #2E8B57);
+      /* Verde para maior */
+    }
+
+    .highlight-less {
+      background: linear-gradient(135deg, #FF6347, #B22222);
+      /* Vermelho para menor */
+    }
+
+    .highlight-equal {
+      background: linear-gradient(135deg, #ffffff00, #ffffff00);
+      /* Amarelo para igual */
+    }
+
+    .google-visualization-tooltip {
+      background: linear-gradient(135deg, #1e1e1e, #131313cc) !important;
+      color: #5a5858 !important;
+      /* Cinza */
+      font-weight: bold;
+      border-radius: 8px;
+      padding: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="header">
+    Quantidade de Processos por Serviço nos Últimos Domingos
+  </div>
+
+  <div id="linechart_material"></div>
+
+  <div class="table-container">
+    <table id="processosTable">
+      <thead>
+      <tr>
+        <th class="sortable" onclick="sortTable(0)">Serviço</th>
+        <th class="sortable" onclick="sortTable(1)">Último</th>
+        <th class="sortable" onclick="sortTable(3)">Penúltimo</th>
+        <th class="sortable" onclick="sortTable(4)">Antepenúltimo</th>
+        <th class="sortable" onclick="sortTable(5)">Anterior</th>
+      </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+      <span class="metric">
+        <span class="label">&nbsp;&nbsp;&nbsp;(μ):</span>
+        <span id="media" class="value"></span>
+        <span class="label">&nbsp;&nbsp;&nbsp;(Mo):</span>
+        <span id="moda" class="value"></span>
+        <span class="label">&nbsp;&nbsp;&nbsp;(Me):</span>
+        <span id="mediana" class="value"></span>
+        <span class="label">&nbsp;&nbsp;&nbsp;(σ²):</span>
+        <span id="variancia" class="value"></span>
+        <span class="label">&nbsp;&nbsp;&nbsp;(σ):</span>
+        <span id="desvioPadrao" class="value"></span>
+        <span class="label">&nbsp;&nbsp;&nbsp;(A):</span>
+        <span id="amplitude" class="value"></span>
+
+        <span class="label">&nbsp;&nbsp;&nbsp;Total Último:</span> <span id="totalUltimo" class="value"></span><br>
+        <span class="label">&nbsp;&nbsp;&nbsp;Total Penúltimo:</span> <span id="totalPenultimo"
+                                                                            class="value"></span><br>
+        <span class="label">&nbsp;&nbsp;&nbsp;Total Antepenúltimo:</span> <span id="totalAntepenultimo"
+                                                                                class="value"></span><br>
+        <span class="label">&nbsp;&nbsp;&nbsp;Total Anterior:</span> <span id="totalAnterior" class="value"></span><br>
+
+        <span id="errorMessage" class="error-message"></span>
+      </span>
+
+  </div>
+</div>
+
+
+<script>
+  google.charts.load('current', { packages: ['corechart', 'bar'] });
+  google.charts.setOnLoadCallback(drawChart);
+
+  let sortDirection = {
+    0: 'asc',
+    1: 'asc',
+    2: 'asc',
+    3: 'asc',
+    4: 'asc'
+  };
+
+  function drawChart() {
+    fetch('http://localhost:8080/api/resultados/sigapce/graph/sigapce-em-aberto-domingos')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Erro ao buscar dados da API');
+          }
+          return response.json();
+        })
+      .then(data => {
+        if (!Array.isArray(data)) {
+          throw new Error("O arquivo JSON não contém um array válido.");
+        }
+
+        const chartData = new google.visualization.DataTable();
+        chartData.addColumn('string', 'Domingo');
+        data.forEach(item => {
+          chartData.addColumn('number', item.servico);
+        });
+
+        let domingos = [
+          { label: 'Último', key: 'quantidade_ultimo_domingo' },
+          { label: 'Penúltimo', key: 'quantidade_penultimo_domingo' },
+          { label: 'Antepenúltimo', key: 'quantidade_antepenultimo_domingo' },
+          { label: 'Anterior', key: 'quantidade_domingo_anterior_antepenultimo_domingo' }
+        ];
+
+        let todasQuantidades = [];
+
+        domingos.forEach(d => {
+          let row = [d.label];
+          data.forEach(item => {
+            let valor = Number(item[d.key]);
+            row.push(valor);
+            todasQuantidades.push(valor);
+          });
+          chartData.addRow(row);
+        });
+
+        const options = {
+          title: 'Quantidade de Processos por Domingo (Empilhado por Serviço)',
+          chartArea: { width: '70%' },
+          isStacked: true,
+          hAxis: { title: 'Quantidade' },
+          vAxis: { title: 'Domingos' },
+          legend: { position: 'none' },
+          tooltip: {
+            isHtml: true,  // Permite estilização avançada com CSS
+            textStyle: {
+              color: 'white', // Cor do texto
+              fontSize: 14 // Tamanho da fonte
+            }
+          },
+            animation: {
+              startup: true, // Ativa a animação de entrada
+              easing: 'inAndOut', // Tipo de animação
+              duration: 1000 // Duração da animação (em milissegundos)
+            }
+        };
+
+        const chart = new google.visualization.BarChart(document.getElementById('linechart_material'));
+        chart.draw(chartData, options);
+
+        // Adicionando o listener para o clique no gráfico
+        google.visualization.events.addListener(chart, 'select', function () {
+          const selection = chart.getSelection();
+          if (selection.length > 0) {
+            const rowIndex = selection[0].row;
+            const colIndex = selection[0].column;
+
+            // Verifica se os índices são válidos antes de prosseguir
+            if (rowIndex >= 0 && colIndex >= 0) {
+              const serviceIndex = colIndex - 1; // Subtrai 1 para ajustar ao índice correto do serviço
+
+              // Verifica se o serviceIndex está dentro do intervalo válido
+              if (serviceIndex >= 0 && serviceIndex < domingos.length) {
+                const serviceName = data[rowIndex][domingos[serviceIndex].key]; // Pega o nome do serviço correspondente
+
+                // Verifica se o nome do serviço é válido
+                if (serviceName) {
+                  highlightTableRow(serviceName, data); // Passando a variável 'data' corretamente
+                } else {
+                  console.error('Nome do serviço não encontrado');
+                }
+              } else {
+                console.error('Índice de serviço inválido:', serviceIndex);
+              }
+            } else {
+              console.error('Seleção inválida de linha ou coluna');
+            }
+          }
+        });
+
+        populateTable(data);
+        atualizarEstatisticas(todasQuantidades);
+
+      })
+      .catch(error => {
+        document.getElementById('errorMessage').innerText = `Erro: ${error.message}`;
+        console.error('Erro:', error);
+      });
+  }
+
+
+
+
+  function highlightTableRow(serviceName, data) {
+    // Remove a classe highlight de todas as linhas
+    const rows = document.querySelectorAll("#processosTable tbody tr");
+    rows.forEach(row => row.classList.remove("highlight"));
+
+    // Encontre a linha correspondente ao serviço
+    const rowToHighlight = Array.from(rows).find(row => {
+      // A comparação de texto precisa ser insensível a espaços e maiúsculas/minúsculas
+      return row.cells[0].innerText.trim().toLowerCase() === serviceName.trim().toLowerCase();
+    });
+
+    // Se a linha correspondente for encontrada, adicione a classe highlight
+    if (rowToHighlight) {
+      rowToHighlight.classList.add("highlight");
+    } else {
+      console.error('Serviço não encontrado na tabela:', serviceName);
+    }
+  }
+
+
+
+  function populateTable(data) {
+    const tbody = document.querySelector("#processosTable tbody");
+    tbody.innerHTML = "";
+
+    data.forEach(item => {
+      const row = document.createElement("tr");
+
+      // Adicionando células com comparação condicional
+      row.innerHTML = `
+    <td>${item.servico}</td>
+    <td class="${compareValues(item.quantidade_ultimo_domingo, item.quantidade_penultimo_domingo)}">${item.quantidade_ultimo_domingo}</td>
+    <td class="${compareValues(item.quantidade_penultimo_domingo, item.quantidade_antepenultimo_domingo)}">${item.quantidade_penultimo_domingo}</td>
+    <td class="${compareValues(item.quantidade_antepenultimo_domingo, item.quantidade_domingo_anterior_antepenultimo_domingo)}">${item.quantidade_antepenultimo_domingo}</td>
+    <td class="${compareValues(item.quantidade_domingo_anterior_antepenultimo_domingo, item.quantidade_ultimo_domingo)}">${item.quantidade_domingo_anterior_antepenultimo_domingo}</td>
+  `;
+
+      tbody.appendChild(row);
+    });
+  }
+
+  function compareValues(value1, value2) {
+    if (value2 === undefined || value2 === null) {
+      return '';  // Sem cor se não houver valor anterior
+    } else if (value1 > value2) {
+      return 'highlight-greater';  // Classe para maior
+    } else if (value1 < value2) {
+      return 'highlight-less';  // Classe para menor
+    } else {
+      return 'highlight-equal';  // Classe para valores iguais
+    }
+  }
+
+
+
+  function sortTable(columnIndex) {
+    const table = document.getElementById("processosTable");
+    const rows = Array.from(table.rows).slice(1);
+    const isAscending = sortDirection[columnIndex] === 'asc';
+
+    rows.sort((rowA, rowB) => {
+      const cellA = rowA.cells[columnIndex].innerText;
+      const cellB = rowB.cells[columnIndex].innerText;
+
+      return isNaN(cellA) || isNaN(cellB)
+        ? (isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA))
+        : (isAscending ? cellA - cellB : cellB - cellA);
+    });
+
+    rows.forEach(row => table.appendChild(row));
+
+    sortDirection[columnIndex] = isAscending ? 'desc' : 'asc';
+    updateSortArrows(columnIndex);
+  }
+
+  function updateSortArrows(sortedIndex) {
+    const headers = document.querySelectorAll('th');
+    headers.forEach((header, index) => {
+      header.classList.remove('sorted-asc', 'sorted-desc');
+      if (index === sortedIndex) {
+        header.classList.add(sortDirection[index] === 'asc' ? 'sorted-asc' : 'sorted-desc');
+      }
+    });
+  }
+
+  function atualizarEstatisticas(data) {
+    if (data.length === 0) return;
+
+    // Inicializa as somas
+    let totalUltimo = 0;
+    let totalPenultimo = 0;
+    let totalAntepenultimo = 0;
+    let totalAnterior = 0;
+
+
+    let valores = [];
+
+    // Percorre os dados somando os valores e armazenando para estatísticas
+    data.forEach(item => {
+      totalUltimo += item.quantidade_ultimo_domingo || 0;
+      totalPenultimo += item.quantidade_penultimo_domingo || 0;
+      totalAntepenultimo += item.quantidade_antepenultimo_domingo || 0;
+      totalAnterior += item.quantidade_domingo_anterior_antepenultimo_domingo || 0;
+      valores.push(
+        item.quantidade_ultimo_domingo || 0,
+        item.quantidade_penultimo_domingo || 0,
+        item.quantidade_antepenultimo_domingo || 0,
+        item.quantidade_domingo_anterior_antepenultimo_domingo || 0
+      );
+    });
+
+    // Média (μ)
+    const media = valores.length > 0 ? valores.reduce((sum, val) => sum + val, 0) / valores.length : 0;
+
+    // Moda (Mo)
+    const contagens = valores.reduce((acc, val) => {
+      val = Number(val); // Garantir que é um número
+      acc[val] = (acc[val] || 0) + 1;
+      return acc;
+    }, {});
+    const maxFreq = Math.max(...Object.values(contagens));
+    const moda = Object.keys(contagens).filter(key => contagens[key] === maxFreq).join(", ");
+
+    // Mediana (Me)
+    const ordenados = [...valores].sort((a, b) => a - b);
+    const meio = Math.floor(ordenados.length / 2);
+    const mediana = ordenados.length % 2 === 0 ? (ordenados[meio - 1] + ordenados[meio]) / 2 : ordenados[meio];
+
+    // Variância (σ²)
+    let somaQuadrados = 0;
+    valores.forEach(val => {
+      somaQuadrados += Math.pow(val - media, 2);
+    });
+    const variancia = somaQuadrados / valores.length;
+
+    // Desvio Padrão (σ)
+    const desvioPadrao = Math.sqrt(variancia);
+
+    // Amplitude (A)
+    const amplitude = Math.max(...valores) - Math.min(...valores);
+
+    // Atualizar valores no footer
+    document.getElementById('totalUltimo').innerText = totalUltimo;
+    document.getElementById('totalPenultimo').innerText = totalPenultimo;
+    document.getElementById('totalAntepenultimo').innerText = totalAntepenultimo;
+    document.getElementById('totalAnterior').innerText = totalAnterior;
+
+    document.getElementById('media').innerText = media.toFixed(2);
+    document.getElementById('moda').innerText = moda;
+    document.getElementById('mediana').innerText = mediana.toFixed(2);
+    document.getElementById('variancia').innerText = variancia.toFixed(2);
+    document.getElementById('desvioPadrao').innerText = desvioPadrao.toFixed(2);
+    document.getElementById('amplitude').innerText = amplitude.toFixed(2);
+
+  }
+
+</script>
+
+</body>
+
+</html>

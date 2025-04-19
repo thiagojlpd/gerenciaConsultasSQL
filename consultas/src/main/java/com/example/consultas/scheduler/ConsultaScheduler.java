@@ -72,4 +72,5 @@ public class ConsultaScheduler {
             executarConsulta("consulta_ultimo_dia", "SELECT * FROM tabela_origem");
         }
     }
+
 }

@@ -23,10 +23,7 @@ import com.itextpdf.layout.element.*;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping

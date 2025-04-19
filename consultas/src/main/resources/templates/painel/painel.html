@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Página Inicial SIGAPCE</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<style>
+  /* Reset básico */
+  * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+  }
+
+  /* Estilos gerais */
+  body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      line-height: 1.6;
+      padding-top: 60px;
+      /* Para não sobrepor o conteúdo com a navbar */
+  }
+
+  /* Navbar (Topo) */
+  /* Navbar */
+  .navbar {
+      background: linear-gradient(135deg, #7c7c7d, #4b4b4b);
+      padding: 15px 0;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      /* Adiciona uma sombra sutil */
+  }
+
+  /* Container da Navbar */
+  .navbar-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+  }
+
+  /* Logo da Navbar */
+  .navbar-logo {
+      font-size: 1.5rem;
+      color: #fff;
+      font-weight: bold;
+      text-transform: uppercase;
+      /* Adiciona uma sensação de sofisticação */
+  }
+
+  /* Links do Menu */
+  .navbar-links a {
+      color: #fff;
+      margin: 0 15px;
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 500;
+      /* Deixa o texto um pouco mais pesado */
+      transition: color 0.3s ease, transform 0.3s ease;
+      /* Suaviza a transição de cor e transforma */
+  }
+
+  /* Efeito de Hover nos Links */
+  .navbar-links a:hover {
+      text-decoration: none;
+      color: #ddd;
+      transform: scale(1.05);
+      /* Efeito de aumento suave no item */
+  }
+
+  /* Ajuste responsivo - Alinha a navbar para centralizar logo e links */
+  @media (max-width: 768px) {
+      .navbar-container {
+          justify-content: center;
+      }
+
+      .navbar-logo {
+          flex: 1;
+          text-align: center;
+      }
+
+      .navbar-links {
+          display: none;
+          /* Opcional: Mostrar apenas em menu hamburguer */
+      }
+  }
+
+
+  /* Container central */
+  .container {
+      max-width: 1200px;
+      margin: 0 auto;
+  }
+
+  /* Cabeçalho */
+  header {
+      text-align: center;
+      margin-bottom: 30px;
+  }
+
+  header h1 {
+      font-size: 2.5rem;
+      color: #333;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+  }
+
+  /* Cards */
+  .card-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+  }
+
+  .card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      overflow: hidden;
+  }
+
+  .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-header {
+      background: linear-gradient(135deg, #6a4caf, #866ff8);
+      color: #fff;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+  }
+
+  .card-header i {
+      font-size: 2rem;
+  }
+
+  .card-header h2 {
+      font-size: 1.2rem;
+      margin-left: 10px;
+  }
+
+  .card-body {
+      padding: 20px;
+      background-color: #fafafa;
+  }
+
+  /* Footer */
+  .footer {
+      background: linear-gradient(135deg, #7c7c7d, #4b4b4b);
+      color: #fff;
+      text-align: center;
+      padding: 10px 0;
+      position: fixed;
+      width: 100%;
+      bottom: 0;
+      left: 0;
+  }
+
+  .footer-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+  }
+
+  /* Responsividade */
+  @media (max-width: 768px) {
+      .card-container {
+          grid-template-columns: 1fr;
+      }
+  }
+
+  /* Tooltip */
+  .tooltip {
+      position: relative;
+      cursor: pointer;
+      font-weight: bold;
+  }
+
+  .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 180px;
+      background-color: #333;
+      color: #e4e4e4;
+      text-align: center;
+      border-radius: 6px;
+      padding: 6px;
+      position: absolute;
+      z-index: 1;
+      bottom: 150%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 12px;
+      text-align: left;
+  }
+
+  .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+  }
+
+  /* Botão moderno */
+  .btn-open-modal {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #6a4caf, #866ff8);
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  }
+
+  .btn-open-modal:hover {
+      transform: scale(1.05);
+      background: linear-gradient(135deg, #6a4caf, #866ff8);
+  }
+
+  /* Modal */
+  .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(5px);
+      justify-content: center;
+      align-items: center;
+  }
+
+  /* Modal Content */
+  .modal-content {
+      width: 90%;
+      max-width: 900px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      animation: slideUp 0.4s ease, fadeIn 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      max-height: 85vh;
+  }
+
+  /* Animações */
+  @keyframes slideUp {
+      from {
+          transform: translateY(30px);
+      }
+
+      to {
+          transform: translateY(0);
+      }
+  }
+
+  @keyframes fadeIn {
+      from {
+          opacity: 0;
+      }
+
+      to {
+          opacity: 1;
+      }
+  }
+
+  /* Modal Header */
+  .modal-header {
+      background: linear-gradient(135deg, #6a4caf, #866ff8);
+      padding: 16px 24px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+  }
+
+  /* Modal Body */
+  .modal-body {
+      padding: 24px;
+      font-family: 'Segoe UI', sans-serif;
+      overflow-y: auto;
+      color: #333;
+      line-height: 1.6;
+  }
+
+  /* Fechar */
+  .close {
+      font-size: 22px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.2s;
+  }
+
+  .close:hover {
+      transform: scale(1.2);
+  }
+
+  /* Responsivo */
+  @media (max-width: 480px) {
+      .modal-content {
+          margin: 20px;
+          border-radius: 12px;
+      }
+
+      .modal-header h2 {
+          font-size: 18px;
+      }
+
+      .modal-body {
+          font-size: 15px;
+          padding: 16px;
+      }
+  }
+</style>
+
+<body>
+<!-- Navbar (Topo) -->
+<nav class="navbar">
+  <div class="navbar-container">
+    <div class="navbar-logo">
+      <span>Painel SIGAPCE</span>
+    </div>
+    <!--<div class="navbar-links">
+        <a href="#">Início</a>
+        <a href="#">Gráficos</a>
+        <a href="#">Relatórios</a>
+        <a href="#">Sobre</a>
+    </div>-->
+  </div>
+</nav>
+
+<div class="container">
+  <header>
+
+  </header>
+
+  <div class="card-container">
+    <div class="card">
+      <div class="card-header">
+        <i class="material-icons">insert_chart</i>
+        <h2>Entrada de Processos (30 dias)</h2>
+      </div>
+      <div class="card-body">
+        <p>Gráfico sobre os processos registrados nos últimos 30 dias.</p>
+        <p><a th:href="@{/painel_30dias}">Acesse o gráfico</a></p>
+        <br>
+        <button class="btn-open-modal"
+                onclick="document.getElementById('modalQtdPorDia').style.display='flex'">
+          ℹ️
+        </button>
+      </div>
+
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <i class="material-icons">calendar_today</i>
+        <h2>Entrada de Processos em 2025</h2>
+      </div>
+      <div class="card-body">
+        <p>Gráfico sobre os processos registrados no ano de 2025.</p>
+        <p><a th:href="@{/painel_ano_corrente}">Acesse o gráfico</a></p>
+        <br>
+        <button class="btn-open-modal"
+                onclick="document.getElementById('modalQtdPorDiaEAno').style.display='flex'">
+          ℹ️
+        </button>
+      </div>
+
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <i class="material-icons">check_circle</i>
+        <h2>Processos em Aberto (4 Domingos)</h2>
+      </div>
+      <div class="card-body">
+        <p>Gráfico sobre os processos que permanecem abertos aos domingos.</p>
+        <p><a th:href="@{/painel_em_aberto_domingos}">Acesse o gráfico</a></p>
+        <button class="btn-open-modal"
+                onclick="document.getElementById('modalQtdEmAbertoPorDomingo').style.display='flex'">
+          ℹ️
+        </button>
+      </div>
+
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <i class="material-icons">warning</i>
+        <h2>Processos com Problema (30 dias)</h2>
+      </div>
+      <div class="card-body">
+        <p>Gráfico sobre os processos que tiveram problemas nos últimos 30 dias.</p>
+        <p><a th:href="@{/painel_com_problemas_30dias}">Acesse o gráfico</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-container">
+    <span>&copy; 2025 SIGAPCE </span>
+  </div>
+</footer>
+
+<!-- Modal -->
+<div id="modalQtdPorDia" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>📊 Informações sobre a Consulta</h2>
+      <span class="close" onclick="document.getElementById('modalQtdPorDia').style.display='none'">✖</span>
+    </div>
+    <div class="modal-body">
+      <h3>✔ O que essa consulta mostra?</h3>
+      <p>
+        <strong>🔹 Distribuição diária:</strong> Exibe a quantidade de processos abertos em cada um dos
+        últimos 30 dias.<br>
+        <strong>🔹 Panorama recente:</strong> Permite visualizar o comportamento da demanda por dia, focando
+        no período mais recente.<br>
+        <strong>🔹 Evolução temporal:</strong> Útil para observar variações e identificar picos ou quedas no
+        volume diário.
+      </p>
+      <p><br></p>
+      <h3>✔ Critérios utilizados na busca</h3>
+      <p>
+        <strong>🔸 Tabela:</strong> Os dados vêm da tabela <code>processo</code>.<br>
+        <strong>🔸 Filtro de data:</strong> Apenas processos com <code>dt_abertura_processo</code> dentro
+        dos últimos 30 dias.<br>
+        <strong>🔸 Agrupamento:</strong> A contagem é feita por <strong>data (sem hora)</strong> de
+        abertura.<br>
+        <strong>🔸 Ordenação:</strong> Os dias são apresentados do mais recente para o mais antigo.
+      </p>
+      <p><br></p>
+      <h3>✔ Aplicações úteis</h3>
+      <p>
+        <strong>🔹 Monitoramento de carga:</strong> Avaliar dias de maior volume para ajustar equipes e
+        recursos.<br>
+        <strong>🔹 Planejamento:</strong> Antecipar períodos de alta demanda com base em padrões
+        recentes.<br>
+        <strong>🔹 Diagnóstico de gargalos:</strong> Relacionar dias com volume elevado a possíveis atrasos
+        nos fluxos.<br>
+        <strong>🔹 Apoio à decisão:</strong> Justificar alocação de pessoal, mudanças no processo ou
+        abertura de plantões em dias críticos.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modalQtdPorDiaEAno" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>📊 Informações sobre a Consulta</h2>
+      <span class="close"
+            onclick="document.getElementById('modalQtdPorDiaEAno').style.display='none'">✖</span>
+    </div>
+    <div class="modal-body">
+      <h3>✔ O que essa consulta mostra?</h3>
+      <p>
+        <strong>🔹 Distribuição diária:</strong> Exibe a quantidade de processos abertos no ano
+        corrente.<br>
+        <strong>🔹 Panorama recente:</strong> Permite visualizar o comportamento da demanda por dia, em uma
+        visualização do ano.<br>
+        <strong>🔹 Evolução temporal:</strong> Útil para observar variações e identificar picos ou quedas no
+        volume diário.
+      </p>
+      <p><br></p>
+      <h3>✔ Critérios utilizados na busca</h3>
+      <p>
+        <strong>🔸 Tabela:</strong> Os dados vêm da tabela <code>processo</code>.<br>
+        <strong>🔸 Filtro de data:</strong> Apenas processos com <code>dt_abertura_processo</code> dentro
+        do ano corrente.<br>
+        <strong>🔸 Agrupamento:</strong> A contagem é feita por <strong>data (sem hora)</strong> de
+        abertura.<br>
+        <strong>🔸 Ordenação:</strong> Os dias são apresentados do mais recente para o mais antigo.
+      </p>
+      <p><br></p>
+      <h3>✔ Aplicações úteis</h3>
+      <p>
+        <strong>🔹 Monitoramento de carga:</strong> Avaliar dias e meses de maior volume para ajustar
+        equipes e
+        recursos.<br>
+        <strong>🔹 Planejamento:</strong> Antecipar períodos de alta demanda com base em padrões
+        recentes.<br>
+        <strong>🔹 Diagnóstico de gargalos:</strong> Relacionar dias e meses com volume elevado a possíveis
+        atrasos
+        nos fluxos.<br>
+        <strong>🔹 Apoio à decisão:</strong> Justificar alocação de pessoal, mudanças no processo ou
+        abertura de plantões em dias críticos.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modalQtdEmAbertoPorDomingo" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>📊 Informações sobre a Consulta</h2>
+      <span class="close"
+            onclick="document.getElementById('modalQtdEmAbertoPorDomingo').style.display='none'">✖</span>
+    </div>
+    <div class="modal-body">
+      <h3>✔ O que essa consulta mostra?</h3>
+      <p>
+        🔹 <strong>Comparativo por tipo de serviço</strong>: mostra a quantidade de processos acumulados por
+        serviço nas situações de em aberto
+        consolidados em cada um dos quatro últimos domingos.<br>
+        🔹 <strong>Linha do tempo semanal</strong>: revela a evolução da demanda nas situações de em aberto
+        ao longo de quatro semanas.<br>
+        🔹 <strong>Visão por serviço</strong>: facilita identificar o acúmulo de serviços nas situações de
+        em aberto.
+      </p>
+      <p><br></p>
+      <h3>✔ Critérios utilizados na busca</h3>
+      <p>
+        🔸 <strong>Período analisado</strong>: os dados se referem a consolidações feitas em cada um dos
+        quatro últimos domingo.<br>
+        🔸 <strong>Somente processos em andamento</strong>: inclui apenas processos nas situações
+        consideradas em aberto.<br>
+        🔸 <strong>Última movimentação registrada</strong>: sempre considera a informação mais recente do
+        status do serviço.<br>
+        🔸 <strong>Organização por serviço</strong>: permite comparação entre os diferentes tipos de
+        serviço.
+      </p>
+      <p><br></p>
+      <h3>✔ Aplicações úteis</h3>
+      <p>
+        🔹 <strong>Acompanhar tendências</strong>: saiba o que está sendo mais acumulado.<br>
+        🔹 <strong>Planejar melhor</strong>: aloque melhor os recursos e otimize a equipe.<br>
+        🔹 <strong>Identificar gargalos</strong>: reconheça serviços que estão sobrecarregados.<br>
+        🔹 <strong>Apoiar decisões estratégicas</strong>: use os dados para justificar ações e
+        melhorias.<br>
+      </p>
+      <p><br></p>
+      <h3> Status considerados em andamento</h3>
+      <p>
+      <table border="1" cellpadding="8" cellspacing="0"
+             style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 10px;">
+        <thead style="background-color: #f2f2f2;">
+        <tr>
+          <th>ID</th>
+          <th>Status</th>
+          <th>Descrição</th>
+          <th>Situação</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td style="min-width: calc(4ch + 10px)">1</td>
+          <td>PROTOCOLADO</td>
+          <td>PROCESSO PROTOCOLADO, AGUARDANDO DISTRIBUIÇÃO.</td>
+          <td style="min-width: calc(12ch + 10px)"><strong>EM ANDAMENTO</strong></td>
+        </tr>
+        <tr>
+          <td>23</td>
+          <td>TERMO DE VISTORIA INCLUIDO</td>
+          <td>TERMO DE VISTORIA INCLUIDO</td>
+          <td><strong>EM ANDAMENTO</strong></td>
+        </tr>
+        <tr>
+          <td>20</td>
+          <td>VISTORIA REALIZADA</td>
+          <td>TERMO DE VISTORIA ENCAMINHADO PARA O(A) ANALISTA.</td>
+          <td><strong>EM ANDAMENTO</strong></td>
+        </tr>
+        <tr>
+          <td>16</td>
+          <td>CUMPRIMENTO DE PENDÊNCIA PROTOCOLADO</td>
+          <td>CUMPRIMENTO DE PENDÊNCIA PROTOCOLADO, AGUARDANDO DISTRIBUIÇÃO E POSTERIOR REANÁLISE.
+          </td>
+          <td><strong>EM ANDAMENTO</strong></td>
+        </tr>
+        <tr>
+          <td>15</td>
+          <td>CORREÇÃO DE DADOS</td>
+          <td>SOLICITAÇÃO DE CORREÇÃO PROTOCOLADA, AGUARDANDO DISTRIBUIÇÃO E POSTERIOR REANÁLISE.</td>
+          <td><strong>EM ANDAMENTO</strong></td>
+        </tr>
+        <tr>
+          <td>14</td>
+          <td>DISTRIBUÍDO</td>
+          <td>PROCESSO DISTRIBUÍDO PARA ANÁLISE.</td>
+          <td><strong>EM ANDAMENTO</strong></td>
+        </tr>
+        <tr>
+          <td>24</td>
+          <td>AUTORIZADA SOLICITAÇÃO DE VISTORIA</td>
+          <td>AUTORIZADA SOLICITAÇÃO DE VISTORIA</td>
+          <td><strong>EM ANDAMENTO</strong></td>
+        </tr>
+        <tr>
+          <td>12</td>
+          <td>REMETIDO À DFPC</td>
+          <td>PROCESSO REMETIDO PARA A DFPC.</td>
+          <td><strong>EM ANDAMENTO</strong></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>EM ANÁLISE</td>
+          <td>PROCESSO EM FASE DE ANÁLISE.</td>
+          <td><strong>EM ANDAMENTO</strong></td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>REANÁLISE</td>
+          <td>PROCESSO EM FASE DE REANÁLISE.</td>
+          <td><strong>EM ANDAMENTO</strong></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>VISTORIA SOLICITADA</td>
+          <td>PROCESSO AGUARDANDO PARECER DA CARTEIRA DE VISTORIA.</td>
+          <td><strong>EM ANDAMENTO</strong></td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td>ENCAMINHADO</td>
+          <td>PROCESSO ENCAMINHADO PARA DESTINATÁRIO CONFORME NOTA INFORMATIVA.</td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        <tr>
+          <td>22</td>
+          <td>SUSPENSO</td>
+          <td>SUSPENSO</td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        <tr>
+          <td>21</td>
+          <td>CONTATAR A 2RM</td>
+          <td>CONTATAR A 2RM</td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>PENDENTE</td>
+          <td>PROCESSO APRESENTA PENDÊNCIA E AGUARDA SOLUÇÃO POR PARTE DO ADMINISTRADO CONFORME NOTA
+            INFORMATIVA.</td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        <tr>
+          <td>19</td>
+          <td>VISTORIA AGENDADA</td>
+          <td>AS CONDIÇÕES DE AGENDAMENTO SERÃO REGISTRADAS NO PAINEL DE AVISOS.</td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        <tr>
+          <td>18</td>
+          <td>CUMPRIMENTO DE PENDÊNCIA NÃO PROTOCOLADO</td>
+          <td>CUMPRIMENTO DE PENDÊNCIA NÃO PROTOCOLADO.</td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        <tr>
+          <td>17</td>
+          <td>CR ENVIADO POR E-MAIL</td>
+          <td>CERTIFICADO DE REGISTRO SERÁ ENVIADO PARA O E-MAIL CADASTRADO.</td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td>DEFERIDO - AGUARDANDO PUBLICAÇÃO</td>
+          <td>PROCESSO DEFERIDO ENCAMINHADO PARA REGISTRO, CADASTRO E IMPRESSÃO DO(S) DOCUMENTO(S).
+          </td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td>INDEFERIDO</td>
+          <td>PROCESSO INDEFERIDO DE ACORDO COM MOTIVO EXPOSTO EM NOTA INFORMATIVA.</td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td>PRONTO PARA RETIRADA</td>
+          <td>PROCESSO PRONTO, RETIRADA AUTORIZADA PELO REQUERENTE/PROCURADOR APÓS 2 DIAS ÚTEIS DESTE
+            AVISO NO SFPC EM QUE FOI REALIZADO ESTE PROTOCOLO. NOS DEMAIS SFPC DO ESTADO DE SP DE
+            ACORDO COM A AGENDA DE CADA UM.</td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td>ARQUIVADO</td>
+          <td>PROCESSO ENVIADO PARA O ARQUIVO</td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td>RETIRADO</td>
+          <td>PROCESSO RETIRADO PELO SOLICITANTE.</td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        <tr>
+          <td>13</td>
+          <td>DEFERIDO PARCIALMENTE</td>
+          <td>PROCESSO DEFERIDO PARCIALMENTE CONFORME NOTA INFORMATIVA. EM FASE DE FINALIZAÇÃO</td>
+          <td>NÃO EM ANDAMENTO</td>
+        </tr>
+        </tbody>
+      </table>
+
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="scripts.js"></script>
+</body>
+
+</html>

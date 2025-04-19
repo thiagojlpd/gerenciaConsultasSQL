@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processos por Dia</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <style>
+        body {
+          font-family: 'Roboto', sans-serif;
+          background-color: #f7f7f7;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .container {
+          background-color: white;
+          border-radius: 8px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+          overflow: hidden;
+          width: 70%;
+          height: 90%;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .header {
+          background: linear-gradient(135deg, #9c88ff, #6a4caf);
+          color: white;
+          padding: 8px;
+          text-align: center;
+          font-size: 20px;
+        }
+
+        #linechart_material {
+          width: 105%;
+          height: 65%;
+        }
+
+        .table-container {
+          width: 100%;
+          max-height: 35%;
+          overflow-y: auto;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          background-color: #fafafa;
+        }
+
+        th,
+        td {
+          padding: 5px 8px;
+          text-align: center;
+          border-bottom: 1px solid #ddd;
+        }
+
+        th {
+          background: linear-gradient(135deg, #f6d1f1, #e9c9d7);
+          color: #6a4caf;
+          position: sticky;
+          top: 0;
+          z-index: 1;
+        }
+
+        tr:hover {
+          background-color: #f1f1f1;
+        }
+
+        th.sorted-asc::after {
+          content: " \2191";
+          /* Seta para cima */
+        }
+
+        th.sorted-desc::after {
+          content: " \2193";
+          /* Seta para baixo */
+        }
+
+        .footer {
+          background: linear-gradient(135deg, #866ff8, #6a4caf);
+          color: white;
+          padding: 10px;
+          font-size: 14px;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+          display: flex;
+          flex-wrap: wrap;
+          /* Permite a quebra de linha */
+          gap: 16px;
+          /* Espaçamento entre as métricas */
+          justify-content: center;
+          /* Alinha os itens à esquerda */
+          bottom: 0;
+        }
+
+        .metric {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+
+        .label {
+          font-weight: bold;
+          margin-right: 8px;
+        }
+
+        .value {
+          font-size: 16px;
+          font-weight: normal;
+          color: #ffd700;
+          /* Dourado suave */
+        }
+
+        .footer .metric:last-child {
+          margin-bottom: 0;
+        }
+
+        .error-message {
+          color: red;
+          font-size: 16px;
+          text-align: center;
+          margin-top: 20px;
+        }
+
+        .highlight {
+          background-color: #f5cffe;
+          /* Cor de destaque (amarelo suave) */
+        }
+
+        .highlight-day {
+          background-color: #f5cffe;
+          /* Cor de destaque (amarelo suave) */
+        }
+
+        .tooltip {
+          position: relative;
+          cursor: pointer;
+          font-weight: bold;
+        }
+
+        .tooltip .tooltiptext {
+          visibility: hidden;
+          width: 180px;
+          background-color: #333;
+          color: #e4e4e4;
+          text-align: center;
+          border-radius: 6px;
+          padding: 6px;
+          position: absolute;
+          z-index: 1;
+          bottom: 150%;
+          left: 50%;
+          transform: translateX(-50%);
+          opacity: 0;
+          transition: opacity 0.3s;
+          font-size: 12px;
+          width: 400px;
+          text-align: left;
+        }
+
+        .tooltip:hover .tooltiptext {
+          visibility: visible;
+          opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="header">
+        Quantidade de Processos por Dia (2025)
+    </div>
+
+    <div id="linechart_material"></div>
+
+    <div class="table-container">
+        <table id="processosTable">
+            <thead>
+            <tr>
+                <th class="sortable" onclick="sortTable(0)">Data de Abertura</th>
+                <th class="sortable" onclick="sortTable(1)">Dia da Semana</th>
+                <th class="sortable" onclick="sortTable(2)">Quantidade</th>
+
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+      <span class="metric">
+        <span class="tooltip">
+          <span class="label">&nbsp;&nbsp;&nbsp;(μ):</span>
+          <span id="media" class="value"></span>
+          <span class="tooltiptext">
+            <h2>✔ O que a média detecta?</h2>
+            <p>
+              <strong>🔹 Tendência central</strong>: Representa o valor médio da quantidade de processos solicitados por
+              dia.<br>
+              <strong>🔹 Comportamento geral</strong>: Indica o nível médio de demanda ao longo do tempo.<br>
+              <strong>🔹 Comparações</strong>: Permite avaliar variações ao longo de períodos diferentes.
+            </p>
+
+            <h2>✔ Como interpretar?</h2>
+            <p>
+              <span class="alert">🔹 Média alta</span> → O número de processos diários tende a ser elevado.<br>
+              <span class="alert">🔹 Média baixa</span> → A demanda diária de processos é relativamente pequena.<br>
+              <span class="alert">🔹 Média estável</span> → A demanda diária não varia muito ao longo do tempo.
+            </p>
+
+            <h2>✔ Aplicações</h2>
+            <p>
+              <strong>🔹 Planejamento estratégico</strong>: Estimar a quantidade média de processos para alocar
+              recursos.<br>
+              <strong>🔹 Comparação de períodos</strong>: Verificar se a demanda aumentou ou diminuiu ao longo do
+              tempo.<br>
+              <strong>🔹 Identificação de padrões</strong>: Determinar períodos de alta ou baixa demanda.
+            </p>
+
+              <!-- FIM DOS CAMPOS -->
+          </span>
+        </span>
+
+
+        <span class="tooltip">
+          <span class="label">&nbsp;&nbsp;&nbsp;(Mo):</span>
+          <span id="moda" class="value"></span>
+          <span class="tooltiptext">
+            <h2>✔ O que a moda detecta?</h2>
+            <p>
+              <strong>🔹 O número de processos mais frequente</strong>: A moda representa a quantidade de processos que
+              ocorre com maior frequência em diferentes dias.<br>
+              <strong>🔹 Padrão mais comum na demanda</strong>: Indica qual é a quantidade típica de processos
+              registrada com maior repetição.<br>
+              <strong>🔹 Possíveis agrupamentos na distribuição</strong>: Se houver mais de uma moda (distribuição
+              multimodal), pode indicar padrões distintos ao longo do tempo.
+            </p>
+
+            <h2>✔ Como interpretar?</h2>
+            <p>
+              <span class="alert">🔹 Moda única</span> → Há um número de processos que ocorre mais frequentemente.<br>
+              <span class="alert">🔹 Múltiplas modas</span> → Existem diferentes valores que aparecem com frequência
+              semelhante, sugerindo variações periódicas na demanda.<br>
+              <span class="alert">🔹 Sem moda clara</span> → A quantidade de processos varia muito e não há um número
+              predominante.
+            </p>
+
+            <h2>✔ Aplicações</h2>
+            <p>
+              <strong>🔹 Identificação da carga de trabalho mais recorrente</strong>: Saber qual volume de processos
+              ocorre com maior frequência.<br>
+              <strong>🔹 Planejamento de equipes</strong>: Se a moda indica um valor comum de processos, as equipes
+              podem ser ajustadas para atender essa demanda.<br>
+              <strong>🔹 Detecção de padrões sazonais</strong>: Se houver múltiplas modas, pode indicar variações em
+              determinados períodos (exemplo: mais processos em determinados dias da semana ou meses do ano).
+            </p>
+
+              <!-- FIM DOS CAMPOS -->
+          </span>
+        </span>
+
+
+        <span class="tooltip">
+          <span class="label">&nbsp;&nbsp;&nbsp;(Me):</span>
+          <span id="mediana" class="value"></span>
+          <span class="tooltiptext">
+            <h2>✔ O que a mediana detecta?</h2>
+            <p>
+              <strong>🔹 Quantidade típica de processos por dia</strong>: A mediana representa o número de processos em
+              um dia "típico", ou seja, aquele que divide a distribuição em duas metades iguais.<br>
+              <strong>🔹 Resistência a variações extremas</strong>: Ao contrário da média, a mediana não é afetada por
+              dias atípicos com volumes muito altos ou muito baixos de processos.<br>
+              <strong>🔹 Padrão real da demanda</strong>: Indica um valor central mais confiável para entender a carga
+              diária de trabalho sem ser distorcido por picos isolados.
+            </p>
+
+            <h2>✔ Como interpretar?</h2>
+            <p>
+              <span class="alert">🔹 Mediana ≈ Média</span> → A distribuição do número de processos por dia é
+              equilibrada.<br>
+              <span class="alert">🔹 Mediana < Média</span> → Há alguns dias com muitos processos, que aumentam a média,
+                  mas a maior parte dos dias tem menos solicitações.<br>
+                  <span class="alert">🔹 Mediana > Média</span> → Existem dias com poucos processos, puxando a média
+                  para baixo, mas a maioria dos dias tem volumes maiores.
+            </p>
+
+            <h2>✔ Aplicações</h2>
+            <p>
+              <strong>🔹 Análise da carga de trabalho</strong>: A mediana mostra o fluxo diário de processos que
+              realmente ocorre na maioria dos dias.<br>
+              <strong>🔹 Planejamento de equipes</strong>: Ajuda a alocar recursos baseando-se no volume típico de
+              processos.<br>
+              <strong>🔹 Comparação de períodos</strong>: Permite verificar se a demanda diária de processos está
+              aumentando ou diminuindo sem influência de dias atípicos.
+            </p>
+          </span>
+        </span>
+
+
+
+        <span class="tooltip">
+          <span class="label">&nbsp;&nbsp;&nbsp;(σ²):</span>
+          <span id="variancia" class="value"></span>
+          <span class="tooltiptext">
+            <h2>✔ O que a variância detecta?</h2>
+            <p>
+              <strong>🔹 Variação da demanda</strong>: Mede o quanto os valores diários de processos se afastam da
+              média.<br>
+              <strong>🔹 Picos anormais de solicitação</strong>: Indica dias com volume muito acima ou abaixo do
+              normal.<br>
+              <strong>🔹 Identificação de padrões e sazonalidade</strong>: Detecta períodos de maior ou menor variação.
+            </p>
+
+            <h2>✔ Como interpretar?</h2>
+            <p>
+              <span class="alert">🔹 Variância baixa</span> → A quantidade de processos por dia é estável.<br>
+              <span class="alert">🔹 Variância alta</span> → Há muita variação na demanda diária.
+            </p>
+
+            <p>
+              <strong>🔹 Variância (σ²)</strong>: Mede a dispersão dos dados em relação à média, mas expressa essa
+              variação em unidades ao quadrado.<br>
+            </p>
+
+            <h2>✔ Aplicações</h2>
+            <p>
+              <strong>🔹 Planejamento de recursos</strong>: Ajustar equipes conforme a variação da demanda.<br>
+              <strong>🔹 Definição de metas realistas</strong>: Adaptar metas à volatilidade do número de processos.<br>
+              <strong>🔹 Identificação de problemas</strong>: Detectar mudanças inesperadas no fluxo de processos.
+            </p>
+
+              <!-- FIM DOS CAMPOS -->
+          </span>
+        </span>
+
+
+        <span class="tooltip">
+          <span class="label">&nbsp;&nbsp;&nbsp;(μ):</span>
+          <span id="desvioPadrao" class="value"></span>
+          <span class="tooltiptext">
+            <h2>✔ O que o desvio padrão detecta?</h2>
+            <p>
+              <strong>🔹 Variação da demanda</strong>: Mede o quanto os valores diários de processos se afastam da
+              média.
+              <strong><br>🔹 Picos anormais de solicitação</strong>: Indica dias com volume muito acima ou abaixo do
+              normal.
+              <strong><br>🔹 Identificação de padrões e sazonalidade</strong>: Detecta períodos de maior ou menor
+              variação.
+            </p>
+            <h2>✔ Como interpretar?</h2>
+            <p>
+              <span class="alert">🔹 Desvio padrão baixo</span> → A quantidade de processos por dia é estável.
+              <span class="alert">🔹 Desvio padrão alto</span> → Há muita variação na demanda diária.
+            </p>
+            <h2>✔ Aplicações</h2>
+            <strong>🔹 Planejamento de recursos</strong>: Ajustar equipes conforme a variação da demanda.</li>
+              <strong><br>🔹 Definição de metas realistas</strong>: Adaptar metas à volatilidade do número de processos.
+            <strong><br>🔹 Identificação de problemas</strong>: Detectar mudanças inesperadas no fluxo de processos.
+          </span>
+        </span>
+
+        <span class="tooltip">
+          <span class="label">&nbsp;&nbsp;&nbsp;(A):</span>
+          <span id="amplitude" class="value"></span>
+          <span class="tooltiptext">
+            <h2>✔ O que a amplitude detecta?</h2>
+            <p>
+              <strong>🔹 Variação total na quantidade de processos</strong>: Mede a diferença entre o maior e o menor número de processos abertos em um período.<br>
+              <strong>🔹 Extremos na demanda</strong>: Indica o intervalo entre os dias de menor e maior volume de processos.<br>
+              <strong>🔹 Indicação de instabilidade</strong>: Quanto maior a amplitude, maior a flutuação na quantidade diária de processos.
+            </p>
+
+            <h2>✔ Como interpretar?</h2>
+            <p>
+              <span class="alert">🔹 Amplitude baixa</span> → A quantidade de processos varia pouco entre os dias.<br>
+              <span class="alert">🔹 Amplitude alta</span> → Há grande diferença entre o menor e o maior número de processos registrados.
+            </p>
+
+            <h2>✔ Aplicações</h2>
+            <p>
+              <strong>🔹 Identificação de períodos críticos</strong>: Avaliar se há dias com picos extremos de processos.<br>
+              <strong>🔹 Planejamento da equipe</strong>: Se a amplitude for alta, pode ser necessário reforçar a equipe em determinados dias.<br>
+              <strong>🔹 Monitoramento de mudanças bruscas</strong>: Uma amplitude elevada pode indicar eventos incomuns ou mudanças nos padrões de solicitação.
+            </p>
+              <!-- FIM DOS CAMPOS -->
+            <span id="errorMessage" class="error-message"></span>
+          </span>
+        </span>
+
+      </span>
+    </div>
+</div>
+
+
+<script>
+
+    let sortDirection = {
+      0: 'asc', // Data de Abertura
+      1: 'asc', // Dia da Semana
+      2: 'asc'  // Quantidade
+    };
+
+    google.charts.load('current', {
+      packages: ['corechart', 'line']
+    });
+
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+      fetch('http://localhost:8080/api/resultados/sigapce/graph/sigapce-ano-corrente')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Erro ao buscar dados da API');
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (!Array.isArray(data)) {
+            throw new Error("O arquivo JSON não contém um array válido.");
+          }
+
+          const chartData = new google.visualization.DataTable();
+          chartData.addColumn('string', 'Data');
+          chartData.addColumn('number', 'Quantidade');
+
+          let somaQuantidades = 0;
+          let numValores = 0;
+          const valores = [];
+          const frequencias = {};
+          const tbody = document.querySelector('#processosTable tbody');
+          tbody.innerHTML = ''; // Limpa a tabela antes de adicionar novos dados
+
+          let previousQuantidade = null;
+
+          data.forEach(item => {
+            const quantidade = isNaN(Number(item.quantidade)) ? 0 : Number(item.quantidade);
+            somaQuantidades += quantidade;
+            numValores++;
+            valores.push(quantidade);
+
+            // Contagem de frequência para a moda
+            frequencias[quantidade] = (frequencias[quantidade] || 0) + 1;
+
+            chartData.addRow([item.data_abertura, quantidade]);
+
+            // Criar e preencher a tabela novamente
+            const row = document.createElement('tr');
+            let cellColor = '';
+
+            if (previousQuantidade !== null) {
+              if (quantidade > previousQuantidade) {
+                cellColor = 'background: linear-gradient(135deg, #90EE90, #2E8B57);';
+              } else if (quantidade < previousQuantidade) {
+                cellColor = 'background: linear-gradient(135deg, #FF6347, #B22222);';
+              } else {
+                cellColor = 'background: linear-gradient(135deg, #FFD700, #FFA07A);';
+              }
+            }
+
+            row.innerHTML = `
+            <td>${item.data_abertura}</td>
+            <td>${item.dia_semana}</td>
+            <td style="${cellColor}">${quantidade}</td>
+          `;
+            tbody.appendChild(row);
+
+            previousQuantidade = quantidade;
+          });
+
+          // Chama a função para destacar os dias de fim de semana
+          highlightWeekendDays();
+
+          const media = Math.round(somaQuantidades / numValores);
+          const mediana = calcularMediana(valores);
+          const moda = calcularModa(frequencias);
+          const variancia = calcularVariancia(valores, media);
+          const desvioPadrao = calcularDesvioPadrao(variancia);
+          const amplitude = calcularAmplitude(valores);
+
+          const limiteSuperior = media + desvioPadrao;
+          const limiteInferior = media - desvioPadrao;
+
+          // Atualizar o rodapé com os valores estatísticos
+          document.getElementById('media').innerText = media;
+          document.getElementById('moda').innerText = moda;
+          document.getElementById('mediana').innerText = Math.round(mediana);
+          document.getElementById('variancia').innerText = variancia.toFixed(2);
+          document.getElementById('desvioPadrao').innerText = desvioPadrao.toFixed(2);
+          document.getElementById('amplitude').innerText = amplitude;
+
+          // Criando a tabela de dados combinada com média e desvios padrão
+          const combinedData = new google.visualization.DataTable();
+          combinedData.addColumn('string', 'Data');
+          combinedData.addColumn('number', 'Quantidade');
+          combinedData.addColumn('number', 'Média');
+          combinedData.addColumn('number', 'Média + μ');
+          combinedData.addColumn('number', 'Média - μ');
+
+          data.forEach(item => {
+            const quantidade = isNaN(Number(item.quantidade)) ? 0 : Number(item.quantidade);
+            combinedData.addRow([item.data_abertura, quantidade, media, limiteSuperior, limiteInferior]);
+          });
+
+          const options = {
+            title: 'Quantidade de Processos por Dia (2025)',
+            curveType: 'function',
+            legend: { position: 'bottom' },
+            tooltip: { isHtml: true },
+            hAxis: { title: 'Data', format: 'dd/MM/yyyy' },
+            vAxis: {
+              title: 'Quantidade de Processos',
+              minValue: -10 // Define o valor mínimo para o eixo Y como -10
+            },
+            series: {
+              0: { color: '#6a4caf' },
+              1: { color: '#FFD700', lineWidth: 2, lineDashStyle: [4, 4] },
+              2: { color: '#32CD32', lineWidth: 2, lineDashStyle: [4, 4] },
+              3: { color: '#FF4500', lineWidth: 2, lineDashStyle: [4, 4] }
+            },
+            animation: {
+              startup: true, // Ativa a animação de entrada
+              easing: 'inAndOut', // Tipo de animação
+              duration: 1000 // Duração da animação (em milissegundos)
+            }
+          };
+
+
+          const chart = new google.visualization.LineChart(document.getElementById('linechart_material'));
+          chart.draw(combinedData, options);
+
+          // Evento para destacar linha na tabela ao clicar no gráfico
+          google.visualization.events.addListener(chart, 'select', function () {
+            const selectedItem = chart.getSelection()[0];
+            if (selectedItem) {
+              const rowIndex = selectedItem.row; // Obtém o índice da linha do gráfico
+              highlightTableRow(rowIndex); // Destaca a linha correspondente na tabela
+            }
+          });
+
+
+          // Função para destacar a linha correta na tabela após o clique no gráfico
+          // Função para destacar a linha correspondente na tabela após o clique no gráfico
+          function highlightTableRow(rowIndex) {
+            const rows = document.querySelectorAll('#processosTable tbody tr');
+            rows.forEach(row => row.classList.remove('highlight')); // Remove o destaque de outras linhas
+
+            // Procurar a linha correspondente à posição da linha no gráfico
+            const selectedRow = rows[rowIndex];
+            if (selectedRow) {
+              selectedRow.classList.add('highlight'); // Adiciona destaque à linha correspondente
+              selectedRow.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Rola até a linha
+            }
+          }
+
+        })
+        .catch(error => {
+          document.getElementById('errorMessage').innerText = `Erro: ${error.message}`;
+          console.error('Erro:', error);
+        });
+    }
+
+    // Funções para cálculos estatísticos
+    function calcularMediana(valores) {
+      valores.sort((a, b) => a - b);
+      const meio = Math.floor(valores.length / 2);
+      return valores.length % 2 === 0 ? (valores[meio - 1] + valores[meio]) / 2 : valores[meio];
+    }
+
+    function calcularModa(frequencias) {
+      return Object.keys(frequencias).reduce((a, b) => frequencias[a] > frequencias[b] ? a : b);
+    }
+
+    function calcularVariancia(valores, media) {
+      const somaQuadrados = valores.reduce((acc, val) => acc + Math.pow(val - media, 2), 0);
+      return somaQuadrados / valores.length;
+    }
+
+    function calcularDesvioPadrao(variancia) {
+      return Math.sqrt(variancia);
+    }
+
+    function calcularAmplitude(valores) {
+      const min = Math.min(...valores);
+      const max = Math.max(...valores);
+      return max - min;
+    }
+
+    // Função para destacar as células da coluna "Dia da Semana"
+    function highlightWeekendDays() {
+      const rows = document.querySelectorAll('#processosTable tbody tr');
+      rows.forEach(row => {
+        const diaSemanaCell = row.cells[1]; // A célula da coluna "Dia da Semana"
+        const diaSemana = diaSemanaCell.textContent.toLowerCase();
+
+        if (['saturday', 'domingo', 'sunday', 'sábado'].includes(diaSemana)) {
+          diaSemanaCell.classList.add('highlight-day'); // Adiciona a classe de destaque
+        } else {
+          diaSemanaCell.classList.remove('highlight-day'); // Remove a classe de destaque
+        }
+      });
+    }
+
+    // Função para ordenar a tabela
+    function sortTable(columnIndex) {
+      const table = document.getElementById("processosTable");
+      const rows = Array.from(table.rows).slice(1); // Pega as linhas, excluindo o cabeçalho
+      const isAscending = sortDirection[columnIndex] === 'asc';
+
+      rows.sort((rowA, rowB) => {
+        const cellA = rowA.cells[columnIndex].innerText;
+        const cellB = rowB.cells[columnIndex].innerText;
+
+        if (columnIndex === 2) { // Quantidade
+          return isAscending ? cellA - cellB : cellB - cellA;
+        } else { // Data de Abertura ou Dia da Semana
+          return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+        }
+      });
+
+      // Adiciona as linhas ordenadas na tabela
+      rows.forEach(row => table.appendChild(row));
+
+      // Atualiza a direção da ordenação e as setas
+      sortDirection[columnIndex] = isAscending ? 'desc' : 'asc';
+    }
+
+    function updateSortArrows(sortedIndex) {
+      const headers = document.querySelectorAll('th');
+      headers.forEach((header, index) => {
+        header.classList.remove('sorted-asc', 'sorted-desc');
+        if (index === sortedIndex) {
+          header.classList.add(sortDirection[index] === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        }
+      });
+    }
+
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processos por Dia</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>-->
+    <script type="text/javascript" src="loader.js"></script>
+
+    <style>
+        body {
+          font-family: 'Roboto', sans-serif;
+          background-color: #f7f7f7;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .container {
+          background-color: white;
+          border-radius: 8px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+          overflow: hidden;
+          width: 70%;
+          height: 90%;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .header {
+          background: linear-gradient(135deg, #9c88ff, #6a4caf);
+          color: white;
+          padding: 8px;
+          text-align: center;
+          font-size: 20px;
+        }
+
+        .table-container {
+          width: 100%;
+          height: 50%;
+          overflow-x: auto;
+          /* Adiciona rolagem horizontal se necessário */
+          overflow-y: auto;
+          /* Garante que a rolagem vertical apareça quando necessário */
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          background-color: #fafafa;
+        }
+
+        th,
+        td {
+          padding: 8px 12px;
+          text-align: center;
+          border-bottom: 1px solid #ddd;
+        }
+
+        th {
+          background: linear-gradient(135deg, #f6d1f1, #e9c9d7);
+          color: #6a4caf;
+          position: sticky;
+          top: 0;
+          z-index: 1;
+          font-weight: bold;
+        }
+
+        tr:hover {
+          background-color: #f1f1f1;
+        }
+
+        th.sorted-asc::after {
+          content: " \2191";
+          /* Seta para cima */
+        }
+
+        th.sorted-desc::after {
+          content: " \2193";
+          /* Seta para baixo */
+        }
+
+        .footer {
+          background: linear-gradient(135deg, #866ff8, #6a4caf);
+          color: white;
+          padding: 10px;
+          font-size: 14px;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+          display: flex;
+          flex-wrap: wrap;
+          gap: 16px;
+          justify-content: center;
+        }
+
+        .metric {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+
+        .label {
+          font-weight: bold;
+          margin-right: 8px;
+        }
+
+        .value {
+          font-size: 16px;
+          font-weight: normal;
+          color: #ffd700;
+        }
+
+        .footer .metric:last-child {
+          margin-bottom: 0;
+        }
+
+        .error-message {
+          color: red;
+          font-size: 16px;
+          text-align: center;
+          margin-top: 20px;
+        }
+
+        .highlight {
+          background-color: #f5cffe;
+        }
+
+        .highlight-day {
+          background-color: #f5cffe;
+        }
+
+        .tooltip {
+          position: relative;
+          cursor: pointer;
+          font-weight: bold;
+        }
+
+        .tooltip .tooltiptext {
+          visibility: hidden;
+          width: 180px;
+          background-color: #333;
+          color: #e4e4e4;
+          text-align: center;
+          border-radius: 6px;
+          padding: 6px;
+          position: absolute;
+          z-index: 1;
+          bottom: 150%;
+          left: 50%;
+          transform: translateX(-50%);
+          opacity: 0;
+          transition: opacity 0.3s;
+          font-size: 12px;
+          text-align: left;
+        }
+
+        .tooltip:hover .tooltiptext {
+          visibility: visible;
+          opacity: 1;
+        }
+
+        .highlight {
+          background-color: #f5cffe;
+          /* Cor de destaque (amarelo suave) */
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <!-- Cabeçalho -->
+    <div class="header">
+        Análise de Processos e Problemas (30 dias)
+    </div>
+
+    <!-- Área do gráfico (ajustada para ocupar todo o espaço disponível) -->
+    <div id="columnchart_material" style="width: 100%; height: 500px;"></div>
+
+    <!-- Tabela -->
+    <div class="table-container">
+        <table id="processosTable">
+            <thead>
+            <tr>
+                <th onclick="sortTable(0)">OM</th>
+                <th onclick="sortTable(1)">Quantidade de Processos</th>
+                <th onclick="sortTable(2)">Quantidade de Problemas</th>
+                <th onclick="sortTable(3)">Percentual de Problemas (%)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Os dados da tabela serão inseridos dinamicamente via JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Rodapé com métricas -->
+    <div class="footer">
+        <span class="metric">
+          <span class="label">&nbsp;&nbsp;&nbsp;Total de Processos:</span> <span id="total-processos"
+                                                                                 class="value"></span><br>
+          <span class="label">&nbsp;&nbsp;&nbsp;Total de Problemas:</span> <span id="total-problemas"
+                                                                                 class="value"></span><br>
+          <span class="label">&nbsp;&nbsp;&nbsp;Média ponderada de Problemas:</span> <span id="percentual-medio"
+                                                                                           class="value"></span><br>
+        </span>
+    </div>
+</div>
+
+<!-- Exibição de erros caso haja falha no carregamento -->
+<div id="error-message" class="error-message"></div>
+</div>
+
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+      google.charts.load('current', { packages: ['corechart', 'table'], language: 'pt-BR' });
+      google.charts.setOnLoadCallback(fetchDataAndDrawChart);
+    });
+
+    function fetchDataAndDrawChart() {
+      fetch('http://localhost:8080/api/resultados/sigapce/graph/sigapce-com-problemas-30-dias')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Erro ao buscar dados da API');
+          }
+          return response.json();
+        })
+        .then(data => {
+          drawColumnChart(data);
+          drawTable(data);
+          updateFooterMetrics(data);
+        })
+        .catch(error => {
+          console.error("Erro ao carregar os dados JSON:", error);
+          document.getElementById("error-message").innerText = "Erro ao carregar os dados.";
+        });
+    }
+
+    function drawColumnChart(data) {
+      var dataTable = new google.visualization.DataTable();
+
+      dataTable.addColumn('string', 'OM');  // Nome da OM (Eixo X)
+      dataTable.addColumn('number', 'Total de Processos'); // Coluna 1
+      dataTable.addColumn('number', 'Quantidade de Problemas'); // Coluna 2
+
+      // Ordena os dados pela quantidade de problemas de forma decrescente
+      data.sort((a, b) => {
+        let problemasA = Number(a.com_alteracao) || 0;
+        let problemasB = Number(b.com_alteracao) || 0;
+        return problemasB - problemasA;  // Maior para menor
+      });
+
+      data.forEach(item => {
+        let om = (item.om && item.om.length > 12) ? item.om.slice(11) : "Desconhecido";
+
+
+        let total = Number(item.total) || 0;
+        let problemas = isNaN(Number(item.com_alteracao)) ? 0 : Number(item.com_alteracao);
+
+        // Adiciona os dados convertidos corretamente
+        dataTable.addRow([om, total, problemas]);
+      });
+
+      var options = {
+        //title: 'Total de Processos e Quantidade de Problemas por OM',
+        hAxis: {
+          title: 'Organizações Militares (OM)',
+          slantedText: true,  // Para melhorar a visualização de rótulos longos
+          slantedTextAngle: 45,
+          textStyle: {
+            fontSize: 10  // Diminuir o tamanho da fonte para melhorar a legibilidade
+          }
+        },
+        vAxis: { title: 'Quantidade' },
+        chartArea: { width: '80%', height: '60%' },  // Aumentar a altura do gráfico
+        legend: { position: 'top' },
+        isStacked: true,  // Se você quiser colunas empilhadas
+        annotations: {
+          alwaysOutside: true, // Força as anotações a aparecerem fora das barras
+          textStyle: {
+            fontSize: 14,
+            color: 'black',  // Cor do texto
+            bold: true
+          }
+        },
+        series: {
+          0: {
+            targetAxisIndex: 0,
+            annotations: { // Aplica as anotações diretamente à série de dados
+              alwaysOutside: true
+            }
+          }
+        },
+            animation: {
+              startup: true, // Ativa a animação de entrada
+              easing: 'inAndOut', // Tipo de animação
+              duration: 1000 // Duração da animação (em milissegundos)
+            }
+      };
+
+
+      var chart = new google.visualization.ColumnChart(document.getElementById('columnchart_material'));
+      google.visualization.events.addListener(chart, 'select', function () {
+        var selectedItem = chart.getSelection()[0];
+        if (selectedItem) {
+          var rowIndex = selectedItem.row;
+          highlightTableRow(rowIndex, data);
+        }
+      });
+      chart.draw(dataTable, options);
+    }
+
+    function drawTable(data) {
+      var table = document.getElementById('processosTable').getElementsByTagName('tbody')[0];
+      table.innerHTML = '';  // Limpa a tabela antes de preencher
+
+      // Ordena os dados pela quantidade de problemas de forma decrescente
+      data.sort((a, b) => {
+        let problemasA = Number(a.com_alteracao) || 0;
+        let problemasB = Number(b.com_alteracao) || 0;
+        return problemasB - problemasA;  // Maior para menor
+      });
+
+      data.forEach((item, index) => {
+        // Verifica se os dados necessários estão presentes
+        let om = item.om || "Desconhecido";
+        let total = item.total ? parseInt(item.total) : 0;  // Usa 0 se 'total' não existir ou for inválido
+        let comAlteracao = item.com_alteracao ? parseInt(item.com_alteracao) : 0;  // Usa 0 se 'com_alteracao' não existir ou for inválido
+        let semAlteracao = item.sem_alteracao ? parseInt(item.sem_alteracao) : 0; // Usa 0 se 'sem_alteracao' não existir ou for inválido
+        let percentual = item.percentual_com_alteracao ? parseFloat(item.percentual_com_alteracao.replace("%", "").trim()) : 0;
+
+        let row = table.insertRow();  // Cria uma nova linha na tabela
+        row.insertCell(0).innerHTML = om;
+        row.insertCell(1).innerHTML = total;
+        row.insertCell(2).innerHTML = comAlteracao;
+        row.insertCell(3).innerHTML = percentual.toFixed(2) + "%";
+
+        // Adiciona títulos para as células
+        row.cells[0].setAttribute('title', 'OM: ' + om);
+        row.cells[1].setAttribute('title', 'Processos: ' + total);
+        row.cells[2].setAttribute('title', 'Problemas: ' + comAlteracao);
+        row.cells[3].setAttribute('title', 'Percentual Problema: ' + percentual.toFixed(2) + '%');
+
+        // Armazena o índice da linha para destaque posterior
+        row.dataset.index = index;
+      });
+    }
+
+    function highlightTableRow(index, data) {
+      var table = document.getElementById('processosTable');
+      var rows = table.getElementsByTagName('tr');
+
+      // Remove destaque de todas as linhas
+      Array.from(rows).forEach(row => row.classList.remove('highlight'));
+
+      // Destaca a linha correspondente
+      var rowToHighlight = Array.from(rows).find(row => row.dataset.index == index);
+      if (rowToHighlight) {
+        rowToHighlight.classList.add('highlight');
+
+        // Rola a tabela até a linha destacada
+        rowToHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+
+    function sortTable(n) {
+      var table = document.getElementById("processosTable");
+      var rows = Array.from(table.rows).slice(1);
+      var ascending = !table.dataset.sortOrder || table.dataset.sortOrder === "desc";
+
+      rows.sort((a, b) => {
+        let x = a.cells[n].innerText.replace("%", "").trim();
+        let y = b.cells[n].innerText.replace("%", "").trim();
+
+        x = isNaN(x) ? x : parseFloat(x);
+        y = isNaN(y) ? y : parseFloat(y);
+
+        return ascending ? x - y : y - x;
+      });
+
+      table.dataset.sortOrder = ascending ? "asc" : "desc";
+      rows.forEach(row => table.appendChild(row));
+    }
+
+    function updateFooterMetrics(data) {
+      // Inicializa as variáveis para os cálculos
+      let totalProcessos = 0;
+      let totalProblemas = 0;
+      let weightedPercentualSum = 0; // Soma ponderada dos percentuais
+      let totalPeso = 0; // Soma total dos pesos (quantidade de processos)
+
+      // Itera sobre os dados para calcular as somas
+      data.forEach(item => {
+        let total = item.total ? parseInt(item.total) : 0;
+        let problemas = item.com_alteracao ? parseInt(item.com_alteracao) : 0;
+        let percentual = item.percentual_com_alteracao ? parseFloat(item.percentual_com_alteracao.replace("%", "").trim()) : 0;
+
+        totalProcessos += total;
+        totalProblemas += problemas;
+
+        // Calcula a soma ponderada do percentual
+        weightedPercentualSum += (percentual * total); // Peso é a quantidade de processos
+        totalPeso += total; // Acumula o total de processos
+      });
+
+      // Calcula o percentual médio ponderado
+      let percentualMedioPonderado = totalPeso > 0 ? (weightedPercentualSum / totalPeso).toFixed(2) : 0;
+
+      // Atualiza os elementos no rodapé
+      document.getElementById("total-processos").innerText = totalProcessos;
+      document.getElementById("total-problemas").innerText = totalProblemas;
+      document.getElementById("percentual-medio").innerText = percentualMedioPonderado + "%";
+    }
+
+</script>
+
+</body>
+
+</html>

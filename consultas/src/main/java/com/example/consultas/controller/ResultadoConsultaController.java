@@ -19,4 +19,5 @@ public class ResultadoConsultaController {
     public List<ResultadoConsulta> listarPorTipo(@PathVariable String tipo) {
         return repository.findTop10ByTipoConsultaOrderByDataExecucaoDesc(tipo);
     }
+
 }
